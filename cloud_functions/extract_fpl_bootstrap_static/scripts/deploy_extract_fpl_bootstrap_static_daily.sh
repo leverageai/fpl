@@ -31,7 +31,7 @@ CONFIG_FILE_NAME="fpl_bootstrap_static_config.yaml"
   echo "Copying files..." &&
   cp ./cloud_functions/$FUNCTION_NAME/main.py $TMP_DIR &&
   cp ./cloud_functions/$FUNCTION_NAME/requirements.txt $TMP_DIR &&
-  cp -r ./cloud_functions/$FUNCTION_NAME/utils/ $TMP_DIR &&
+  cp -r ./cloud_functions/utils/ $TMP_DIR &&
   cp ./cloud_functions/$FUNCTION_NAME/config/$CONFIG_FILE_NAME $TMP_DIR &&
   echo "DONE" &&
 

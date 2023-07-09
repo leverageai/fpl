@@ -64,7 +64,7 @@ def get_response_from_api(url):
         logging.debug(f"Response received from api {url}")
     return response
 
-def upload_data_to_gcs_bucket(bucket_name, data, blob_name, metadata=BlobMetadata(), content_type='text/plain'):
+def upload_data_to_gcs_bucket(bucket_name, data, blob_name, content_type='text/plain', metadata=BlobMetadata()):
     """Uploads data to the bucket"""
     # The ID of your GCS bucket
     # bucket_name = "your-bucket-name"

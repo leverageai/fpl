@@ -1,20 +1,14 @@
-# Imports the Cloud Logging client library
-import google.cloud.logging
-
-# Instantiates a client
-client = google.cloud.logging.Client()
-
-# Retrieves a Cloud Logging handler based on the environment
-# you're running in and integrates the handler with the
-# Python logging module. By default this captures all logs
-# at INFO level and higher
-client.setup_logging()
-
 import yaml
 from datetime import datetime
 import functions_framework
 import logging
-from utils.ingest import upload_data_to_gcs_bucket, get_response_from_api
+import requests
+from utils.GCS.blob import Metadata, Blob
+from utils.GCS.bucket import Bucket
+
+# Setup variables
+STATUS_SUCCESS = ('SUCCESS',200)
+STATUS_FAILURE = ('FAILURE',500)
 
 # Load configuration variables
 with open("fpl_bootstrap_static_config.yaml") as f:
@@ -47,34 +41,49 @@ def extract_fpl_bootstrap_static(request):
         Functions, see the `Writing HTTP functions` page.
         <https://cloud.google.com/functions/docs/writing/http#http_frameworks>
     """
+
     # Get response from API
-    logging.info("Getting response from API....")
-    logging.info(f"URL: {source_url}")
-    response = get_response_from_api(source_url)
+    response = requests.get(url=source_url)
+    
+    # Raise error if error response code received
+    try:
+        response.raise_for_status()
+    except Exception as e:
+        logging.error(f"An error occured getting response from api {source_url}: {e}")
+        return STATUS_FAILURE
+
+    # Extract response content
+    source_data = response.text
     source_response_code = response.status_code
     source_content_type = response.headers['content-type'] if 'content-type' in response.headers.keys() else None
-    logging.info(f"Response code: {source_response_code}")
-    logging.info(f"Content type: {source_content_type}")
+
     # Check valid response
-    if source_response_code==200 and source_content_type=='application/json':
-        # Extract data from response
-        source_data = response.text
-        # Set Blob metadata
-        metadata = BlobMetadata(
-            source_name=source_name,
-            source_url=source_url,
-            source_datetime=source_datetime.isoformat(),
-            response_code=str(response.status_code),
-            response_headers=response.headers)
-        # Upload data to Cloud Storage
-        logging.info("Uploading data to GCS...")
-        logging.info(f"Bucket: {bucket_name}")
-        logging.info(f"Blob: {blob_name}")
-        logging.info(f"Metadata: {metadata}")
-        upload_data_to_gcs_bucket(    
-            bucket_name=bucket_name, 
-            data=source_data, 
-            blob_name=blob_name,
-            metadata=metadata)
+    try:
+        assert(source_response_code==200)
+    except AssertionError:
+        logging.error(f"Invalid source response code: {source_response_code}")
+        return STATUS_FAILURE
+    
+    try:
+        assert(source_content_type=='application/json')
+    except AssertionError:
+        logging.error(f"Invalid source content type: {source_content_type}")
+        return STATUS_FAILURE
+
+    # Instantiate cloud storage bucket and blob
+    bucket = Bucket(name=bucket_name)
+    blob = Blob(name=blob_name, bucket=bucket)
+
+    # Set Blob metadata
+    metadata = Metadata(
+        source_name=source_name,
+        source_url=source_url,
+        source_datetime=source_datetime.isoformat(),
+        response_code=str(response.status_code),
+        response_headers=response.headers)
+
+    # Upload data into cloud storage blob
+    blob.upload_data(data=source_data, content_type=source_content_type, metadata=metadata)
+        
     # Return valid response from Cloud Function
-    return 'OK'
+    return STATUS_SUCCESS
