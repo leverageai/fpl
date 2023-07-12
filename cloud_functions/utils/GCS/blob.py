@@ -45,3 +45,8 @@ class Blob(Blob):
         """Upload data to storage bucket"""
         self.upload_from_string(data=data, content_type=content_type)
         self._set_metadata(metadata=metadata)
+
+    def download_data(self):
+        """Download data and metadata from storage bucket"""
+        data = self.download_as_text()
+        return data
