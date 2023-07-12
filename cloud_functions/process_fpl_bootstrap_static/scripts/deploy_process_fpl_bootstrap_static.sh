@@ -3,12 +3,10 @@
 # Set project and function variables
 PROJECT_ID="leverageai-sandbox"
 REGION="australia-southeast1"
-FUNCTION_NAME="extract_fpl_bootstrap_static"
-ENTRY_POINT="extract_fpl_bootstrap_static"
+FUNCTION_NAME="process_fpl_bootstrap_static"
+ENTRY_POINT="process_fpl_bootstrap_static"
 RUNTIME="python311"
 MEMORY="128Mi"
-JOB="extract_fpl_bootstrap_static_daily"
-SCHEDULE="0 22 * * *"
 TIME_ZONE="utc"
 VERBOSITY="warning"
 
@@ -52,46 +50,5 @@ CONFIG_FILE_NAME="fpl_bootstrap_static_config.yaml"
     --allow-unauthenticated \
     --verbosity $VERBOSITY \
     --quiet &&
-  echo "DONE" &&
-
-  # Get Cloud Function URI
-  URI=$(
-    gcloud functions describe $FUNCTION_NAME \
-      --gen2 \
-      --region=$REGION \
-      --verbosity=$VERBOSITY \
-      --format="value(serviceConfig.uri)"
-  ) &&
-
-  # Delete existing CRON job
-  echo "Find and delete existing CRON job... $JOB" &&
-  (
-    (
-      gcloud scheduler jobs delete $JOB \
-        --location=$REGION \
-        --verbosity=$VERBOSITY \
-        --quiet && 
-      echo "DONE"
-    ) || 
-    (
-      (
-        gcloud scheduler jobs describe $JOB \
-          --location=$REGION \
-          --verbosity=$VERBOSITY \
-          --quiet && 
-        echo "DONE: FOUND NOT DELETED"
-      ) || 
-      echo "DONE: NOT FOUND"
-    )
-  ) &&
-  
-  # Create CRON job
-  echo "Creating CRON job... $JOB" &&
-  gcloud scheduler jobs create http $JOB \
-    --location=$REGION \
-    --schedule="$SCHEDULE" \
-    --uri=$URI \
-    --verbosity=$VERBOSITY \
-    --quiet &&
-  echo "DONE" 
+  echo "DONE"
 )
