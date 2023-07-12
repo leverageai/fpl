@@ -4,6 +4,7 @@ import functions_framework
 import logging
 import requests
 from typing import Dict
+import json
 from utils.GCS.blob import Metadata, Blob
 from utils.GCS.bucket import Bucket
 
@@ -23,12 +24,31 @@ source_api_version = config["source_api_version"]
 schema = config["schema"]
 output_folder_name = config["output_folder_name"]
 
-# Set variables
-source_datetime = datetime.utcnow()
-blob_name = f"{output_folder_name}/source_name:{source_name}/source_date:{source_datetime.date().isoformat()}/data.jsonl"
+def process_blob(blob) -> dict:
+    """Process blob which triggered event"""
 
-def process_blob(blob):
-    pass
+    # Store objects in local variable
+    objects = {}
+
+    # Extract data
+    data = json.loads(blob.download_as_string())
+    
+    # Object keys
+    object_keys = {
+        "events"
+        ,"game settings"
+        ,"phases"
+        ,"teams"
+        ,"elements"
+        ,"element_stats"
+        ,"element_types"
+        ,"total players"
+    }
+
+    # Extract objects
+    objects.update({key: data[key] for key in data.keys() & object_keys})
+
+    return objects
 
 @functions_framework.cloud_event
 def process_fpl_bootstrap_static(cloud_event):
@@ -57,8 +77,20 @@ def process_fpl_bootstrap_static(cloud_event):
     event_bucket = Bucket(name=event_data["bucket"])
     event_blob = Blob(name=event_data["name"], bucket=event_bucket)
 
+    # Get source datetime from event blob metadata
+    source_datetime = datetime.fromisoformat(event_blob.metadata["source_datetime"])
+
     # Process blob
     data = process_blob(blob=event_blob)
+
+    # Loop through each object in data
+    for key, object in data.items():
+
+        # Upload object to cloud storage
+        blob_name = f"{output_folder_name}/source_name:{source_name}/object:{key}/source_date:{source_datetime.date().isoformat()}/data.jsonl"
+
+        # Convert object into JSONL (https://www.kaggle.com/code/nestoranaranjo/convert-json-to-jsonl-with-python-for-bigquery?scriptVersionId=85393799&cellId=9)
+        
 
     # Instantiate output cloud storage objects
     output_bucket = Bucket(name=bucket_name)
