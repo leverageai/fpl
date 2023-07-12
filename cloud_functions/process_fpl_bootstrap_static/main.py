@@ -3,6 +3,7 @@ from datetime import datetime
 import functions_framework
 import logging
 import requests
+from typing import Dict
 from utils.GCS.blob import Metadata, Blob
 from utils.GCS.bucket import Bucket
 
@@ -24,7 +25,10 @@ output_folder_name = config["output_folder_name"]
 
 # Set variables
 source_datetime = datetime.utcnow()
-blob_name = f"{output_folder_name}/source_name:{source_name}/source_date:{source_datetime.date().isoformat()}/data001.json"
+blob_name = f"{output_folder_name}/source_name:{source_name}/source_date:{source_datetime.date().isoformat()}/data.jsonl"
+
+def process_blob(blob):
+    pass
 
 @functions_framework.cloud_event
 def process_fpl_bootstrap_static(cloud_event):
@@ -42,24 +46,29 @@ def process_fpl_bootstrap_static(cloud_event):
         Access the CloudEvent data payload via cloud_event.data
     """
 
-    # Get bucket and blob names from cloud event
+    # Enforce typing on cloud_event.data
+    event_data: Dict = cloud_event.data
 
-    # Process blob data
+    # Extract cloud event id and type
+    event_id = cloud_event["id"]
+    event_type = cloud_event["type"]
 
-    # Instantiate output cloud storage bucket and blob
-    bucket = Bucket(name=bucket_name)
-    blob = Blob(name=blob_name, bucket=bucket)
+    # Instantiate blob which triggered cloud event
+    event_bucket = Bucket(name=event_data["bucket"])
+    event_blob = Blob(name=event_data["name"], bucket=event_bucket)
+
+    # Process blob
+    data = process_blob(blob=event_blob)
+
+    # Instantiate output cloud storage objects
+    output_bucket = Bucket(name=bucket_name)
+    output_blob = Blob(name=blob_name, bucket=output_bucket)
 
     # Set metadata for output blob
-    metadata = Metadata(
-        source_name=source_name,
-        source_url=source_url,
-        source_datetime=source_datetime.isoformat(),
-        response_code=str(response.status_code),
-        response_headers=response.headers)
+    output_metadata = event_blob.metadata
 
     # Upload data into output blob
-    blob.upload_data(data, content_type, metadata)
+    output_blob.upload_data(data=data, content_type="application/jsonl", metadata=output_metadata)
         
     # Return valid response from Cloud Function
     return STATUS_SUCCESS
