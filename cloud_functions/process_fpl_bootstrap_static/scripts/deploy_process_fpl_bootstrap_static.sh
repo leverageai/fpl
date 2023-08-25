@@ -5,6 +5,7 @@ PROJECT_ID="leverageai-sandbox"
 REGION="australia-southeast1"
 FUNCTION_NAME="process_fpl_bootstrap_static"
 ENTRY_POINT="process_fpl_bootstrap_static"
+TRIGGER_BUCKET="leverageai-sandbox-data"
 RUNTIME="python311"
 MEMORY="128Mi"
 TIME_ZONE="utc"
@@ -46,8 +47,7 @@ CONFIG_FILE_NAME="fpl_bootstrap_static_config.yaml"
     --runtime $RUNTIME \
     --memory $MEMORY \
     --source . \
-    --trigger-http \
-    --allow-unauthenticated \
+    --trigger-bucket $TRIGGER_BUCKET \
     --verbosity $VERBOSITY \
     --quiet &&
   echo "DONE"
