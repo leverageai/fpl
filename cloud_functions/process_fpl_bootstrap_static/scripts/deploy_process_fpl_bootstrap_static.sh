@@ -7,9 +7,10 @@ FUNCTION_NAME="process_fpl_bootstrap_static"
 ENTRY_POINT="process_fpl_bootstrap_static"
 TRIGGER_BUCKET="leverageai-sandbox-data"
 RUNTIME="python311"
-MEMORY="128Mi"
+MEMORY="2Gi"
 TIME_ZONE="utc"
-VERBOSITY="warning"
+MAX_INSTANCES="10"
+TIMEOUT="600"
 
 # Set timestamp
 TIMESTAMP=$(date +%Y%m%d%H%M%S)
@@ -30,7 +31,6 @@ CONFIG_FILE_NAME="fpl_bootstrap_static_config.yaml"
   echo "Copying files..." &&
   cp ./cloud_functions/$FUNCTION_NAME/main.py $TMP_DIR &&
   cp ./cloud_functions/$FUNCTION_NAME/requirements.txt $TMP_DIR &&
-  cp -r ./cloud_functions/utils/ $TMP_DIR &&
   cp ./cloud_functions/$FUNCTION_NAME/config/$CONFIG_FILE_NAME $TMP_DIR &&
   echo "DONE" &&
 
@@ -46,9 +46,9 @@ CONFIG_FILE_NAME="fpl_bootstrap_static_config.yaml"
     --entry-point $ENTRY_POINT \
     --runtime $RUNTIME \
     --memory $MEMORY \
+    --max-instances $MAX_INSTANCES \
+    --timeout $TIMEOUT \
     --source . \
-    --trigger-bucket $TRIGGER_BUCKET \
-    --verbosity $VERBOSITY \
-    --quiet &&
+    --trigger-bucket $TRIGGER_BUCKET &&
   echo "DONE"
 )
