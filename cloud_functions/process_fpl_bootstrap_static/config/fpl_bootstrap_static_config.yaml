@@ -1,0 +1,10 @@
+# fpl_bootstrap_static_config.yaml file
+
+bucket_name: "leverageai-sandbox-data"
+source_name: "fpl_api_bootstrap_static"
+source_url: "https://fantasy.premierleague.com/api/bootstrap-static/"
+source_parameters: {}
+source_api_version: ""
+schema: {}
+output_folder_name: "staging"
+trigger_folder: "raw/source_name:fpl_api_bootstrap_static"

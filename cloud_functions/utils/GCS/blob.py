@@ -14,6 +14,7 @@ class Metadata:
     response_headers: dict = field(default_factory=dict)
     schema: dict = field(default_factory=dict)
 
+
 class Blob(Blob):
     def __init__(
             self,
@@ -30,7 +31,8 @@ class Blob(Blob):
             encryption_key=encryption_key,
             kms_key_name=kms_key_name,
             generation=generation)
-        
+
+
     def _set_metadata(self, metadata: Metadata):
         """Set Blob metadata"""
 
@@ -41,7 +43,20 @@ class Blob(Blob):
         self.metadata = asdict(metadata)
         self.patch(if_metageneration_match=metageneration_match_precondition)
     
+
     def upload_data(self, data, content_type="text/plain", metadata=Metadata()):
         """Upload data to storage bucket"""
         self.upload_from_string(data=data, content_type=content_type)
         self._set_metadata(metadata=metadata)
+
+
+    def upload_file(self, filename, content_type="text/plain", metadata=Metadata()):
+        """Upload data to storage bucket from file"""
+        self.upload_from_filename(filename=filename, content_type=content_type)
+        self._set_metadata(metadata=metadata)
+
+
+    def download_data(self):
+        """Download data and metadata from storage bucket"""
+        data = self.download_as_text()
+        return data
