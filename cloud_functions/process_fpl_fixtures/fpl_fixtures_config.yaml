@@ -1,0 +1,10 @@
+# fpl_fixtures_config.yaml file
+
+bucket_name: "leverageai-sandbox-data"
+source_name: "fpl_api_fixtures"
+source_url: "https://fantasy.premierleague.com/api/fixtures/"
+source_parameters: {}
+source_api_version: ""
+schema: {}
+output_folder_name: "staging"
+trigger_folder: "raw/source_name:fpl_api_fixtures"
