@@ -5,6 +5,6 @@ SELECT
   team_a AS away_team_id,
   kickoff_time,
 FROM
-  `leverageai-sandbox.source.ext_src_fpl_api_fixtures`
+  `leverageai-sandbox.source.ext_fpl_api_fixtures`
 WHERE
-  source_date=(SELECT MAX(source_date) FROM `leverageai-sandbox.source.ext_src_fpl_api_fixtures`)
+  source_date=(SELECT MAX(source_date) FROM `leverageai-sandbox.source.ext_fpl_api_fixtures`)

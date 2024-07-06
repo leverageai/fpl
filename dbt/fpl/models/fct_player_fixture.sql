@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized='table'
+  )
+}}
+
 WITH
 events AS 
 (
@@ -12,9 +18,9 @@ events AS
     team_a_score AS away_team_score,
     stats
   FROM
-    `leverageai-sandbox.source.ext_src_fpl_api_fixtures`
+    `leverageai-sandbox.source.ext_fpl_api_fixtures`
   WHERE
-    source_date=(SELECT MAX(source_date) FROM `leverageai-sandbox.source.ext_src_fpl_api_fixtures`)
+    source_date=(SELECT MAX(source_date) FROM `leverageai-sandbox.source.ext_fpl_api_fixtures`)
 ),
 home_stats AS (
 SELECT
