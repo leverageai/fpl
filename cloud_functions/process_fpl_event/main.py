@@ -90,8 +90,8 @@ def process_blob(event_bucket_name, event_blob_name):
     data = json.loads(event_blob.download_as_string())
     metadata = event_blob.metadata
 
-    stats_blob_name = f"{output_folder_name}/source_name={source_name}/source_date={source_datetime.date().isoformat()}/data=stats/data01.csv"
-    explain_blob_name = f"{output_folder_name}/source_name={source_name}/source_date={source_datetime.date().isoformat()}/data=explain/data01.csv"
+    stats_blob_name = f"{output_folder_name}/source_name={source_name}/element=stats/source_date={source_datetime.date().isoformat()}/data01.csv"
+    explain_blob_name = f"{output_folder_name}/source_name={source_name}/element=explain/source_date={source_datetime.date().isoformat()}/data01.csv"
     
     stats_temp_file_name = f'{datetime.now().strftime("%Y%m%d%H%M%S")}_stats.csv'
     explain_temp_file_name = f'{datetime.now().strftime("%Y%m%d%H%M%S")}_explain.csv'
