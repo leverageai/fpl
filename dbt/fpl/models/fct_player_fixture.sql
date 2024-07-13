@@ -68,19 +68,77 @@ all_stats AS (
   SELECT * FROM home_stats
   UNION ALL
   SELECT * FROM away_stats
+),
+events_stats AS (
+  SELECT
+    player_id,
+    team_id,
+    fixture_id,
+    gameweek_id,
+    home_team_id,
+    away_team_id,
+    home_team_difficulty,
+    away_team_difficulty,
+    home_team_score,
+    away_team_score,
+    IFNULL(goals_scored,0) AS goals_scored,
+    IFNULL(assists,0) AS assists,
+    IFNULL(clean_sheets,0) AS clean_sheets,
+    IFNULL(goals_conceded,0) AS goals_conceded,
+    IFNULL(own_goals,0) AS own_goals,
+    IFNULL(penalties_saved,0) AS penalties_saved,
+    IFNULL(penalties_missed,0) AS penalties_missed,
+    IFNULL(yellow_cards,0) AS yellow_cards,
+    IFNULL(red_cards,0) AS red_cards,
+    IFNULL(saves,0) AS saves,
+    IFNULL(bonus,0) AS bonus,
+    IFNULL(bps,0) AS bonus_points_system,
+  FROM
+    all_stats
+  PIVOT(
+    SUM(value) FOR identifier IN (
+      'goals_scored',
+      'assists',
+      'clean_sheets',
+      'goals_conceded',
+      'own_goals',
+      'penalties_saved',
+      'penalties_missed',
+      'yellow_cards',
+      'red_cards',
+      'saves',
+      'bonus',
+      'bps'
+    )
+  )
+),
+player_stats AS (
+  SELECT
+    id AS player_id,
+    event_id AS gameweek_id,
+    minutes,
+    starts,
+    expected_goals,
+    expected_assists,
+    expected_goal_involvements,
+    expected_goals_conceded,
+  FROM
+    `leverageai-sandbox.source.ext_fpl_api_event_stats`
+  WHERE
+    source_date=(SELECT MAX(source_date) FROM `leverageai-sandbox.source.ext_fpl_api_event_stats`)
 )
 SELECT
-  player_id,
-  team_id,
-  fixture_id,
-  gameweek_id,
-  home_team_id,
-  away_team_id,
+  events_stats.player_id,
+  events_stats.team_id,
+  events_stats.fixture_id,
+  events_stats.gameweek_id,
+  events_stats.home_team_id,
+  events_stats.away_team_id,
   home_team_difficulty,
   away_team_difficulty,
   home_team_score,
   away_team_score,
-  -- NULL AS minutes,
+  IFNULL(minutes,0) AS minutes,
   IFNULL(goals_scored,0) AS goals_scored,
   IFNULL(assists,0) AS assists,
   IFNULL(clean_sheets,0) AS clean_sheets,
@@ -92,27 +150,15 @@ SELECT
   IFNULL(red_cards,0) AS red_cards,
   IFNULL(saves,0) AS saves,
   IFNULL(bonus,0) AS bonus,
-  IFNULL(bps,0) AS bonus_points_system,
-  -- NULL AS start,
-  -- NULL AS expected_goals,
-  -- NULL AS expected_assists,
-  -- NULL AS expected_goal_involvements,
-  -- NULL AS expected_goals_conceded,
+  IFNULL(bonus_points_system,0) AS bonus_points_system,
+  IFNULL(starts,0) AS starts,
+  IFNULL(expected_goals,0) AS expected_goals,
+  IFNULL(expected_assists,0) AS expected_assists,
+  IFNULL(expected_goal_involvements,0) AS expected_goal_involvements,
+  IFNULL(expected_goals_conceded,0) AS expected_goals_conceded,
 FROM
-  all_stats
-PIVOT(
-  SUM(value) FOR identifier IN (
-    'goals_scored',
-    'assists',
-    'clean_sheets',
-    'goals_conceded',
-    'own_goals',
-    'penalties_saved',
-    'penalties_missed',
-    'yellow_cards',
-    'red_cards',
-    'saves',
-    'bonus',
-    'bps'
-  )
-)
+  events_stats
+LEFT OUTER JOIN
+  player_stats
+  ON events_stats.player_id=player_stats.player_id
+  AND events_stats.gameweek_id=player_stats.gameweek_id
