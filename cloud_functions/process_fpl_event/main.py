@@ -23,7 +23,8 @@ schema = config["schema"]
 output_folder_name = config["output_folder_name"]
 trigger_folder = config["trigger_folder"]
 
-def extract_stats_data(output_filepath, data):
+def extract_stats_data(output_filepath, data, metadata):
+    event_id = json.loads(metadata["source_parameters"])["event_id"]
     elements_df = pd.DataFrame(data['elements'])
     elements_stats_df = pd.concat(
         objs=[
@@ -31,7 +32,8 @@ def extract_stats_data(output_filepath, data):
             pd.json_normalize(elements_df['stats'])],
         axis=1
     )
-    elements_stats_cols = ['id', 'minutes', 'goals_scored', 'assists', 'clean_sheets',
+    elements_stats_df['event_id'] = event_id
+    elements_stats_cols = ['id', 'event_id', 'minutes', 'goals_scored', 'assists', 'clean_sheets',
        'goals_conceded', 'own_goals', 'penalties_saved', 'penalties_missed',
        'yellow_cards', 'red_cards', 'saves', 'bonus', 'bps', 'influence',
        'creativity', 'threat', 'ict_index', 'starts', 'expected_goals',
@@ -45,7 +47,8 @@ def extract_stats_data(output_filepath, data):
     return
 
 
-def extract_explain_data(output_filepath, data):
+def extract_explain_data(output_filepath, data, metadata):
+    event_id = json.loads(metadata["source_parameters"])["event_id"]
     elements_explain_df = pd.json_normalize(data,'elements')
     elements_explain_df = elements_explain_df.apply(lambda x: x.explode())
     elements_explain_df = pd.concat(
@@ -62,7 +65,8 @@ def extract_explain_data(output_filepath, data):
             pd.json_normalize(elements_explain_df['stats'])
         ], axis=1
     )
-    elements_explain_cols = ['id', 'fixture', 'identifier', 'points', 'value']
+    elements_explain_df['event_id'] = event_id
+    elements_explain_cols = ['id', 'event_id', 'fixture', 'identifier', 'points', 'value']
     elements_explain_df.to_csv(
         output_filepath,
         columns=elements_explain_cols, 
@@ -83,12 +87,15 @@ def process_blob(event_bucket_name, event_blob_name):
     # get bucket data as blob
     event_blob = event_bucket.get_blob(event_blob_name)
 
+    # get metadata
+    event_blob.reload()
+    event_blob_metadata = event_blob.metadata
+
     # Get source datetime from event blob metadata
-    source_datetime = datetime.fromisoformat(event_blob.metadata["source_datetime"])
+    source_datetime = datetime.fromisoformat(event_blob_metadata["source_datetime"])
 
     # Extract data from event blob
     data = json.loads(event_blob.download_as_string())
-    metadata = event_blob.metadata
 
     stats_blob_name = f"{output_folder_name}/source_name={source_name}/element=stats/source_date={source_datetime.date().isoformat()}/data01.csv"
     explain_blob_name = f"{output_folder_name}/source_name={source_name}/element=explain/source_date={source_datetime.date().isoformat()}/data01.csv"
@@ -97,8 +104,8 @@ def process_blob(event_bucket_name, event_blob_name):
     explain_temp_file_name = f'{datetime.now().strftime("%Y%m%d%H%M%S")}_explain.csv'
 
     # Transform JSON data into CSV
-    extract_stats_data(stats_temp_file_name, data)
-    extract_explain_data(explain_temp_file_name, data)
+    extract_stats_data(stats_temp_file_name, data, event_blob_metadata)
+    extract_explain_data(explain_temp_file_name, data, event_blob_metadata)
 
     # Upload data into output blob
     # Optional: set a metageneration-match precondition to avoid potential race
@@ -111,11 +118,11 @@ def process_blob(event_bucket_name, event_blob_name):
     explain_blob.upload_from_filename(filename=explain_temp_file_name, content_type="text/csv")
 
     metageneration_match_precondition = stats_blob.metageneration
-    stats_blob.metadata = metadata
+    stats_blob.metadata = event_blob_metadata
     stats_blob.patch(if_metageneration_match=metageneration_match_precondition)
 
     metageneration_match_precondition = explain_blob.metageneration
-    explain_blob.metadata = metadata
+    explain_blob.metadata = event_blob_metadata
     explain_blob.patch(if_metageneration_match=metageneration_match_precondition)
 
     # Write to logs
