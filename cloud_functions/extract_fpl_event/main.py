@@ -3,6 +3,7 @@ from datetime import datetime
 import functions_framework
 import logging
 import requests
+import json
 from google.cloud.storage import Client
 
 # Setup variables
@@ -87,12 +88,12 @@ def extract_fpl_event(request):
         metageneration_match_precondition = blob.metageneration
         blob.metadata = {
             "source_name": source_name,
-            "source_url": source_url,
-            "source_parameters": source_parameters,
+            "source_url": url,
+            "source_parameters": json.dumps({"event_id": event_id}),
             "source_api_version": "",
             "source_datetime": source_datetime.isoformat(),
             "response_code": str(response.status_code),
-            "response_headers": response.headers,
+            "response_headers": json.dumps(dict(response.headers)),
             "schema": {}
         }
         blob.patch(if_metageneration_match=metageneration_match_precondition)
