@@ -162,3 +162,4 @@ cython_debug/
 # Added by Jonathan Yu
 .envs/
 .data/
+.venv/
