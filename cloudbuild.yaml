@@ -1,11 +1,25 @@
 steps:
-  # Deploy the Cloud Function to Google Cloud Functions
+  # Deploy Cloud Functions
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'extract_fpl_bootstrap_static', '--gen2', '--project', 'leverageai-sandbox', '--region', 'australia-southeast1', '--entry-point', 'extract_fpl_bootstrap_static', '--runtime', 'python311', '--memory', '128Mi', '--source', 'cloud_functions/extract_fpl_bootstrap_static/', '--trigger-http', '--allow-unauthenticated']
   - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'extract_fpl_event', '--gen2', '--project', 'leverageai-sandbox', '--region', 'australia-southeast1', '--entry-point', 'extract_fpl_event', '--runtime', 'python310', '--memory', '128Mi', '--source', 'cloud_functions/extract_fpl_event/', '--trigger-http', '--allow-unauthenticated']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'extract_fpl_fixtures', '--gen2', '--project', 'leverageai-sandbox', '--region', 'australia-southeast1', '--entry-point', 'extract_fpl_fixtures', '--runtime', 'python310', '--memory', '128Mi', '--source', 'cloud_functions/extract_fpl_fixtures/', '--trigger-http', '--allow-unauthenticated']
+  - name: 'gcr.io/cloud-builders/gcloud'
     args: ['functions', 'deploy', 'process_fpl_bootstrap_static', '--gen2', '--project', 'leverageai-sandbox', '--region', 'australia-southeast1', '--entry-point', 'process_fpl_bootstrap_static', '--runtime', 'python311', '--memory', '2Gi', '--max-instances', '10', '--timeout', '600', '--source', 'cloud_functions/process_fpl_bootstrap_static/', '--trigger-bucket', 'leverageai-sandbox-data']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'process_fpl_event', '--gen2', '--project', 'leverageai-sandbox', '--region', 'australia-southeast1', '--entry-point', 'process_fpl_event', '--runtime', 'python310', '--memory', '2Gi', '--max-instances', '10', '--timeout', '600', '--source', 'cloud_functions/process_fpl_event/', '--trigger-bucket', 'leverageai-sandbox-data']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'process_fpl_fixtures', '--gen2', '--project', 'leverageai-sandbox', '--region', 'australia-southeast1', '--entry-point', 'process_fpl_fixtures', '--runtime', 'python310', '--memory', '2Gi', '--max-instances', '10', '--timeout', '600', '--source', 'cloud_functions/process_fpl_fixtures/', '--trigger-bucket', 'leverageai-sandbox-data']
 
   # Create Cloud Scheduler jobs for the Cloud Functions
   - name: 'gcr.io/cloud-builders/gcloud'
     entrypoint: 'bash'
-    args: ['cloud_scheduler/extract_fpl_bootstrap_static_daily/deploy.sh']
+    args: ['cloud_scheduler/deploy_extract_fpl_bootstrap_static_daily.sh']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args: ['cloud_scheduler/deploy_extract_fpl_event_daily.sh']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args: ['cloud_scheduler/deploy_extract_fpl_fixtures_daily.sh']
