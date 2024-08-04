@@ -1,0 +1,21 @@
+# fantasyfootballhub_predictions_config.yaml file
+
+bucket_name: "leverageai-sandbox-data"
+source_name: "fantasyfootballhub_predictions"
+source_url: "https://data.fantasyfootballhub.co.uk/api/player-predictions"
+source_parameters: {
+  "orderBy":"points",
+  "focus":"range",
+  "positions":[1,2,3,4],
+  "min_cost":40,
+  "max_cost":150,
+  "search_term":null,
+  "gw_start":1,
+  "gw_end":4,
+  "first":0,
+  "last":10
+}
+source_api_version: ""
+schema: {}
+output_folder_name: "staging"
+trigger_folder: "raw/source_name:fantasyfootballhub_predictions"
