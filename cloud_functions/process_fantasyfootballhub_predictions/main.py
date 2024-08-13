@@ -1,5 +1,5 @@
 import yaml
-from datetime import datetime
+from datetime import datetime, timezone
 import functions_framework
 from typing import Dict
 import json
@@ -65,15 +65,14 @@ def process_blob(event_bucket_name, event_blob_name):
     # get metadata
     event_blob.reload()
     event_blob_metadata = event_blob.metadata
-    event_id = json.loads(event_blob_metadata["source_parameters"])["event_id"]
-    source_datetime = datetime.fromisoformat(event_blob_metadata["source_datetime"])
-
+    source_datetime = datetime.now(timezone.utc)
+    current_datetime_string = source_datetime.strftime("%Y%m%d%H%M%S")
+    
     # Extract data from event blob
     data = json.loads(event_blob.download_as_string())
 
-    current_datetime_string = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    blob_name = f"{output_folder_name}/source_name={source_name}/element=stats/event_id={event_id}/source_date={source_datetime.date().isoformat()}/{current_datetime_string}.csv"
+    blob_name = f"{output_folder_name}/source_name={source_name}/source_date={source_datetime.date().isoformat()}/{current_datetime_string}.csv"
     
     temp_file_name = f'{current_datetime_string}.csv'
 
